@@ -4,7 +4,7 @@ const PROMPT = `Run PR workflow for current repository.
 
 1. Read CONTRIBUTING.md first. Follow its contribution and commit rules.
 2. Run only tests, linting, formatting, and type checks explicitly required by CONTRIBUTING.md. If it does not name any, run none. Apply formatting only when CONTRIBUTING.md requires it.
-3. Preserve all existing work. Never reset, discard, or stash changes. Fetch origin. If current branch is main or does not have its own branch, create a descriptive branch. Ensure branch is based on up-to-date origin/main without overwriting work. If this cannot be done without losing work, stop and explain.
+3. Preserve all existing work. Never reset, discard, or stash changes. Fetch origin. Use CONTRIBUTING.md branch naming rules when present. If current branch is main or does not have its own branch, create a descriptive branch. Ensure branch is based on up-to-date origin/main without overwriting work. If this cannot be done without losing work, stop and explain.
 4. Resolve any merge conflicts and run git diff --check. Do not open PR while conflicts remain.
 5. Commit all intended changes. Use CONTRIBUTING.md commit guidance, else concise imperative commit message.
 6. Open GitHub PR with gh. Use this body structure. Every Summary line must be concise, imperative, and descriptive. Verification must be actionable Markdown checklist items, one per check actually run, with exact command and result. Omit Closes when no issue number is known:
