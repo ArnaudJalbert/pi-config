@@ -5,7 +5,7 @@ Portable Pi configuration. Secrets and session history stay local.
 ## Install on a new Mac
 
 ```bash
-git clone git@github.com:YOUR_GITHUB_USER/pi-config.git ~/.config/pi-config
+git clone git@github.com:ArnaudJalbert/pi-config.git ~/.config/pi-config
 ~/.config/pi-config/bootstrap.sh
 ```
 
