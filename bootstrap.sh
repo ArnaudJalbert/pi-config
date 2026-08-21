@@ -18,6 +18,7 @@ command -v brew >/dev/null || { echo 'Install Homebrew first: https://brew.sh'; 
 brew bundle --file="$root/Brewfile"
 link "$root/pi/agent/settings.json" "$HOME/.pi/agent/settings.json"
 link "$root/pi/agent/APPEND_SYSTEM.md" "$HOME/.pi/agent/APPEND_SYSTEM.md"
+link "$root/pi/agent/extensions" "$HOME/.pi/agent/extensions"
 link "$root/agents/skills" "$HOME/.agents/skills"
 
 pi install npm:pi-web-access@0.24.0

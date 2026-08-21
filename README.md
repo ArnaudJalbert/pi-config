@@ -24,10 +24,19 @@ git clone git@github.com:ArnaudJalbert/pi-config.git ~/.config/pi-config
 
 ## Tracked
 
-- Pi settings and global prompt
+- Pi settings, global prompt, and custom extensions
 - Shared agent skills
 - Exact Pi package versions
 - Homebrew requirements
+
+## Add custom extension
+
+```bash
+mkdir -p ~/.config/pi-config/pi/agent/extensions
+$EDITOR ~/.config/pi-config/pi/agent/extensions/my-extension.ts
+```
+
+Run `~/.config/pi-config/bootstrap.sh` once on this machine to create extension link. Pi loads it after `/reload` or restart.
 
 ## Not tracked
 
