@@ -1,0 +1,4 @@
+# Never commit Pi credentials, sessions, caches, or local package installs.
+.pi/
+*.session.jsonl
+.DS_Store
