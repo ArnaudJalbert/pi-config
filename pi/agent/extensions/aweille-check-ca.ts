@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
 
 const PROMPT = `Review current branch's pull request.
 
@@ -7,11 +8,29 @@ const PROMPT = `Review current branch's pull request.
 3. Never edit code, tests, configuration, or Git history. Findings only.
 4. Collect every finding, including source skill, severity, file and line, issue, and concise recommended fix.
 5. Post all findings as one Markdown comment on PR. Start comment with <!-- aweille-review -->. On reruns, update existing marked comment instead of adding another. If no findings, post that no findings were found.
-6. Alert user with every finding in final response and a count notification.
+6. Call announce_pr_reviewed with PR number and URL only after posting succeeds.
+7. Alert user with every finding in final response and a count notification.
 
 Report PR URL and comment URL.`;
 
 export default function (pi: ExtensionAPI) {
+  pi.registerTool({
+    name: "announce_pr_reviewed",
+    label: "Announce PR Reviewed",
+    description: "Emit pr:reviewed after aweille-check-ca posts its PR review comment.",
+    parameters: Type.Object({
+      number: Type.Integer({ minimum: 1 }),
+      url: Type.String(),
+    }),
+    async execute(_toolCallId, params) {
+      pi.events.emit("pr:reviewed", params);
+      return {
+        content: [{ type: "text", text: `Announced PR #${params.number} review.` }],
+        details: params,
+      };
+    },
+  });
+
   pi.events.on("pr:opened", () => {
     pi.sendUserMessage(PROMPT, { deliverAs: "followUp" });
   });
