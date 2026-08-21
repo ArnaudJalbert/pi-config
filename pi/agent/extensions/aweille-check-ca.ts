@@ -12,6 +12,10 @@ const PROMPT = `Review current branch's pull request.
 Report PR URL and comment URL.`;
 
 export default function (pi: ExtensionAPI) {
+  pi.events.on("pr:opened", () => {
+    pi.sendUserMessage(PROMPT, { deliverAs: "followUp" });
+  });
+
   pi.registerCommand("aweille-check-ca", {
     description: "Review PR with ponytail and quality skills; comment findings without changing code",
     handler: async (_args, ctx) => {

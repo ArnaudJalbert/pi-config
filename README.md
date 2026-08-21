@@ -17,8 +17,8 @@ git clone git@github.com:ArnaudJalbert/pi-config.git ~/.config/pi-config
 - `ponytail`: favors smallest working code change.
 - `pi-caveman`: terse agent responses.
 - `pi-github-issues`: GitHub issue tooling.
-- `/aweille-pousse`: manual PR workflow. Reads `CONTRIBUTING.md`, runs only checks named there, creates branch/commit/PR, then watches CI.
-- `/aweille-check-ca`: manual PR review. Runs ponytail and quality reviews, then posts findings without changing code.
+- `/aweille-pousse`: manual PR workflow. Reads `CONTRIBUTING.md`, runs only checks named there, creates branch/commit/PR, queues PR review, then watches CI.
+- `/aweille-check-ca`: manual PR review, also queued when `/aweille-pousse` opens PR. Runs ponytail and quality reviews, then posts findings without changing code.
 - `code-review-and-quality`: multi-axis code review.
 - `frontend-ui-engineering`: accessible production UI work.
 - `frontend-design-review`: frontend design and accessibility review.
