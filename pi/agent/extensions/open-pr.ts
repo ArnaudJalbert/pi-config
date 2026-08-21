@@ -15,7 +15,7 @@ Summary
 
 Verification
 
-- [x] `command run` - result
+- [x] \`command run\` - result
 
 Closes #issue-number
 
@@ -24,7 +24,7 @@ Closes #issue-number
 Report branch, commit, PR URL, checks run, and CI result.`;
 
 export default function (pi: ExtensionAPI) {
-  pi.registerCommand("open-pr", {
+  pi.registerCommand("aweille", {
     description: "Run CONTRIBUTING.md-driven checks, commit, PR creation, and CI watch",
     handler: async (_args, ctx) => {
       if (!await ctx.ui.confirm("Open pull request?", "May create branch, commit, open PR, and wait for CI.")) return;

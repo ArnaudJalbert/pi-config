@@ -17,7 +17,7 @@ git clone git@github.com:ArnaudJalbert/pi-config.git ~/.config/pi-config
 - `ponytail`: favors smallest working code change.
 - `pi-caveman`: terse agent responses.
 - `pi-github-issues`: GitHub issue tooling.
-- `/open-pr`: manual PR workflow. Reads `CONTRIBUTING.md`, runs only checks named there, creates branch/commit/PR, then watches CI.
+- `/aweille`: manual PR workflow. Reads `CONTRIBUTING.md`, runs only checks named there, creates branch/commit/PR, then watches CI.
 - `code-review-and-quality`: multi-axis code review.
 - `frontend-ui-engineering`: accessible production UI work.
 - `frontend-design-review`: frontend design and accessibility review.
@@ -37,7 +37,7 @@ mkdir -p ~/.config/pi-config/pi/agent/extensions
 $EDITOR ~/.config/pi-config/pi/agent/extensions/my-extension.ts
 ```
 
-Run `~/.config/pi-config/bootstrap.sh` once on this machine to create extension link. Pi loads it after `/reload` or restart. Invoke PR workflow with `/open-pr`.
+Run `~/.config/pi-config/bootstrap.sh` once on this machine to create extension link. Pi loads it after `/reload` or restart. Invoke PR workflow with `/aweille`.
 
 ## Not tracked
 
