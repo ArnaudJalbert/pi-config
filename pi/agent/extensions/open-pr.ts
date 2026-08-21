@@ -7,17 +7,17 @@ const PROMPT = `Run PR workflow for current repository.
 3. Preserve all existing work. Never reset, discard, or stash changes. Fetch origin. If current branch is main or does not have its own branch, create a descriptive branch. Ensure branch is based on up-to-date origin/main without overwriting work. If this cannot be done without losing work, stop and explain.
 4. Resolve any merge conflicts and run git diff --check. Do not open PR while conflicts remain.
 5. Commit all intended changes. Use CONTRIBUTING.md commit guidance, else concise imperative commit message.
-6. Open GitHub PR with gh. Write this body structure, replacing placeholders with factual content. Do not include placeholders in PR:
+6. Open GitHub PR with gh. Use this body structure. Every Summary line must be concise, imperative, and descriptive. Verification must be actionable Markdown checklist items, one per check actually run, with exact command and result. Omit Closes when no issue number is known:
 
 Summary
 
-    - [concise bullet for each user-visible or maintainability change]
+[one concise imperative, descriptive change per line]
 
 Verification
 
-    - [each command actually run and its result]
+- [x] `command run` - result
 
-Closes #[issue number, only when known]
+Closes #issue-number
 
 7. Wait for CI using gh. If any check fails, do not change code. Report failed checks and propose concrete fix.
 
