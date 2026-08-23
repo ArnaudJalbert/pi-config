@@ -5,6 +5,7 @@
   "defaultThinkingLevel": "low",
   "tuiMode": "regular",
   "fullscreenScrollbar": "auto",
+  "quietStartup": true,
   "packages": [
     "npm:pi-web-access@0.24.0",
     "npm:@dietrichgebert/ponytail@4.9.0",

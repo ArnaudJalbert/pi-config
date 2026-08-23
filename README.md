@@ -19,6 +19,7 @@ git clone git@github.com:ArnaudJalbert/pi-config.git ~/.config/pi-config
 - `pi-github-issues`: GitHub issue tooling.
 - `/aweille-pousse`: manual PR workflow. Reads `CONTRIBUTING.md`, runs only checks named there, creates branch/commit/PR, queues PR review, then watches CI.
 - `/aweille-check-ca`: manual PR review, also queued when `/aweille-pousse` opens PR. Runs ponytail and quality reviews, then posts findings without changing code.
+- `/aweille-racont <idea>`: researches a plain-language idea, refines it with you, then publishes an approved GitHub user story.
 - `code-review-and-quality`: multi-axis code review.
 - `frontend-ui-engineering`: accessible production UI work.
 - `frontend-design-review`: frontend design and accessibility review.
