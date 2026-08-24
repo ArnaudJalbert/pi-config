@@ -17,9 +17,11 @@ git clone git@github.com:ArnaudJalbert/pi-config.git ~/.config/pi-config
 - `ponytail`: favors smallest working code change.
 - `pi-caveman`: terse agent responses.
 - `pi-github-issues`: GitHub issue tooling.
-- `/aweille-pousse`: manual PR workflow. Reads `CONTRIBUTING.md`, runs only checks named there, creates branch/commit/PR, queues PR review, then watches CI.
-- `/aweille-check-ca`: manual PR review, also queued when `/aweille-pousse` opens PR. Runs ponytail and quality reviews, then posts findings without changing code.
-- `/aweille-racont <idea>`: researches a plain-language idea, refines it with you, then publishes an approved GitHub user story.
+- **aweille** (custom extension): PR/MR workflow for GitHub (`gh`) and GitLab (`glab`). Host is detected from `origin`; prompts handle judgment, code runs git/CLI operations.
+  - `/aweille-pousse`: reads `CONTRIBUTING.md`, gathers git state, then commits, opens PR/MR, queues review, and watches CI.
+  - `/aweille-check-ca`: reviews the open PR/MR (also queued after pousse). Posts findings as a simple comment; never changes code.
+  - `/aweille-arrange-ca`: plans fixes from review comments; `/aweille-arrange-ca apply` implements approved items and replies on threads.
+  - `/aweille-racont <idea>`: drafts a user story with you, then publishes an approved issue on publish.
 - `code-review-and-quality`: multi-axis code review.
 - `frontend-ui-engineering`: accessible production UI work.
 - `frontend-design-review`: frontend design and accessibility review.
@@ -39,7 +41,7 @@ mkdir -p ~/.config/pi-config/pi/agent/extensions
 $EDITOR ~/.config/pi-config/pi/agent/extensions/my-extension.ts
 ```
 
-Run `~/.config/pi-config/bootstrap.sh` once on this machine to create extension link. Pi loads it after `/reload` or restart. Invoke PR workflow with `/aweille-pousse`.
+Run `~/.config/pi-config/bootstrap.sh` once on this machine to create extension link. Pi loads it after `/reload` or restart.
 
 ## Not tracked
 
