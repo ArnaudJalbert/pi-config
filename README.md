@@ -13,19 +13,32 @@ git clone git@github.com:ArnaudJalbert/pi-config.git ~/.config/pi-config
 
 ## What this setup uses
 
+### aweille
+
+Custom extension for PR/MR workflow on GitHub (`gh`) and GitLab (`glab`). Host is detected from `origin`; prompts handle judgment, code runs git/CLI operations.
+
+- `/aweille-pousse`: reads `CONTRIBUTING.md`, gathers git state, then commits, opens PR/MR, queues review, and watches CI.
+- `/aweille-check-ca`: reviews the open PR/MR (also queued after pousse). Posts findings as a simple comment; never changes code.
+- `/aweille-arrange-ca`: plans fixes from review comments; `/aweille-arrange-ca apply` implements approved items and replies on threads.
+- `/aweille-racont <idea>`: drafts a user story with you, then publishes an approved issue on publish.
+
+### Installed extensions
+
+npm packages pinned in `pi/agent/settings.json` and installed by `bootstrap.sh`:
+
 - `pi-web-access`: web search and page-content tools.
 - `ponytail`: favors smallest working code change.
 - `pi-caveman`: terse agent responses.
 - `pi-github-issues`: GitHub issue tooling.
-- **aweille** (custom extension): PR/MR workflow for GitHub (`gh`) and GitLab (`glab`). Host is detected from `origin`; prompts handle judgment, code runs git/CLI operations.
-  - `/aweille-pousse`: reads `CONTRIBUTING.md`, gathers git state, then commits, opens PR/MR, queues review, and watches CI.
-  - `/aweille-check-ca`: reviews the open PR/MR (also queued after pousse). Posts findings as a simple comment; never changes code.
-  - `/aweille-arrange-ca`: plans fixes from review comments; `/aweille-arrange-ca apply` implements approved items and replies on threads.
-  - `/aweille-racont <idea>`: drafts a user story with you, then publishes an approved issue on publish.
+- `@open-cursor/pi-agent`: Cursor agent integration.
+
+### Review extensions
+
+Shared skills linked from `agents/skills/`:
+
 - `code-review-and-quality`: multi-axis code review.
 - `frontend-ui-engineering`: accessible production UI work.
 - `frontend-design-review`: frontend design and accessibility review.
-- OpenAI Codex, default model `gpt-5.6-terra`, low thinking.
 
 ## Tracked
 
