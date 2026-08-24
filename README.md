@@ -19,7 +19,7 @@ Custom extension for PR/MR workflow on GitHub (`gh`) and GitLab (`glab`). Host i
 
 - `/aweille-pousse`: reads `CONTRIBUTING.md`, gathers git state, then commits, opens PR/MR, queues review, and watches CI.
 - `/aweille-check-ca`: reviews the open PR/MR (also queued after pousse). Posts findings as a simple comment; never changes code.
-- `/aweille-arrange-ca`: plans fixes from review comments; `/aweille-arrange-ca apply` implements approved items and replies on threads.
+- `/aweille-arrange-ca`: reads review comments and plans fixes (also queued after check-ca); `/aweille-arrange-ca apply` implements approved items and replies on threads.
 - `/aweille-racont <idea>`: drafts a user story with you, then publishes an approved issue on publish.
 
 ### Installed extensions

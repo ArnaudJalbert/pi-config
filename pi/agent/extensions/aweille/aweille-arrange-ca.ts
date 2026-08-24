@@ -21,6 +21,13 @@ function planPrompt(host: GitHost, change: Change, comments: Comment[]): string 
 ${formatComments(comments)}`;
 }
 
+async function startPlan(pi: ExtensionAPI, cwd: string, host: GitHost): Promise<string | null> {
+  const change = await getCurrentChange(pi, cwd, host);
+  if (!change) return `No open ${host.changeShort} found.`;
+  pi.sendUserMessage(planPrompt(host, change, await listComments(pi, cwd, host, change)));
+  return null;
+}
+
 function applyPrompt(host: GitHost, change: Change, comments: Comment[], contributing: string | null): string {
   return `Implement the approved ${host.changeShort} review plan. Comments are preloaded; ${host.commentsOnly}
 
@@ -54,20 +61,26 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  pi.events.on("change:reviewed", async (change: Change) => {
+  pi.events.on("change:reviewed", async () => {
     const host = gitHost();
     if ("error" in host) {
       pi.sendUserMessage(`Cannot plan fixes: ${host.error}`, { deliverAs: "followUp" });
       return;
     }
-    pi.sendUserMessage(planPrompt(host, change, await listComments(pi, cwd(), host, change)), { deliverAs: "followUp" });
+    const err = await startPlan(pi, cwd(), host);
+    if (err) pi.sendUserMessage(err, { deliverAs: "followUp" });
   });
 
   pi.registerCommand("aweille-arrange-ca", {
-    description: "Plan PR/MR-review fixes, or apply approved plan and reply to addressed threads",
+    description: "Plan PR/MR-review fixes from comments, or apply approved plan and reply to addressed threads",
     handler: async (args, ctx) => {
-      if (args.trim() !== "apply") {
-        ctx.ui.notify("Waiting for change:reviewed. Use /aweille-arrange-ca apply after approving plan.", "info");
+      const sub = args.trim();
+      if (sub !== "apply") {
+        const host = requireGitHost(ctx);
+        if (!host) return;
+        if (!await ctx.ui.confirm(`Plan ${host.changeShort} review fixes?`, `Reads current ${host.changeShort} comments and drafts a fix plan. Does not edit files.`)) return;
+        const err = await startPlan(pi, ctx.cwd, host);
+        if (err) ctx.ui.notify(err, "error");
         return;
       }
       const host = requireGitHost(ctx);
