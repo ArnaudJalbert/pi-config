@@ -16,6 +16,10 @@ function parseJson<T>(raw: string, label: string): T {
   }
 }
 
+function firstUrl(text: string): string | null {
+  return text.match(/https?:\/\/\S+/)?.[0] ?? null;
+}
+
 export async function getCurrentChange(pi: ExtensionAPI, cwd: string, host: GitHost): Promise<Change | null> {
   if (host.kind === "github") {
     const result = await cli(pi, cwd, host, ["pr", "view", "--json", "number,url,baseRefName"]);
@@ -23,22 +27,45 @@ export async function getCurrentChange(pi: ExtensionAPI, cwd: string, host: GitH
     const data = parseJson<{ number: number; url: string; baseRefName?: string }>(result.stdout, "gh pr view");
     return { number: data.number, url: data.url, base: data.baseRefName };
   }
-  const result = await cli(pi, cwd, host, ["mr", "view", "-F", "json"]);
+  // Prefer mr list over mr view: view fails when open+closed MRs share a branch
+  const branch = (await pi.exec("git", ["branch", "--show-current"], { cwd, timeout: 30_000 })).stdout?.trim() ?? "";
+  if (!branch) return null;
+  const result = await cli(pi, cwd, host, ["mr", "list", "--source-branch", branch, "-F", "json"]);
   if (result.code !== 0) return null;
-  const data = parseJson<{ iid: number; web_url: string; target_branch?: string }>(result.stdout, "glab mr view");
-  return { number: data.iid, url: data.web_url, base: data.target_branch };
+  const list = parseJson<Array<{ iid: number; web_url: string; target_branch?: string }>>(result.stdout, "glab mr list");
+  const data = list[0];
+  return data ? { number: data.iid, url: data.web_url, base: data.target_branch } : null;
 }
 
 export async function createChange(pi: ExtensionAPI, cwd: string, host: GitHost, title: string, body: string): Promise<Change> {
   if (host.kind === "github") {
+    const existing = await getCurrentChange(pi, cwd, host);
+    if (existing) {
+      const result = await cli(pi, cwd, host, ["pr", "edit", String(existing.number), "--title", title, "--body", body]);
+      if (result.code !== 0) fail(result, "gh pr edit");
+      return existing;
+    }
     const result = await cli(pi, cwd, host, ["pr", "create", "--title", title, "--body", body, "--json", "number,url"]);
     if (result.code !== 0) fail(result, "gh pr create");
     return parseJson<Change>(result.stdout, "gh pr create");
   }
-  const result = await cli(pi, cwd, host, ["mr", "create", "--yes", "-t", title, "-d", body, "-F", "json"]);
+
+  const existing = await getCurrentChange(pi, cwd, host);
+  if (existing) {
+    const result = await cli(pi, cwd, host, ["mr", "update", String(existing.number), "-t", title, "-d", body, "-y"]);
+    if (result.code !== 0) fail(result, "glab mr update");
+    return existing;
+  }
+
+  // glab mr create has no -F/--output; resolve via list or URL in text output
+  const result = await cli(pi, cwd, host, ["mr", "create", "--yes", "-t", title, "-d", body]);
   if (result.code !== 0) fail(result, "glab mr create");
-  const data = parseJson<{ iid: number; web_url: string }>(result.stdout, "glab mr create");
-  return { number: data.iid, url: data.web_url };
+  const change = await getCurrentChange(pi, cwd, host);
+  if (change) return change;
+  const url = firstUrl(`${result.stdout}\n${result.stderr}`);
+  const number = Number(url?.match(/\/merge_requests\/(\d+)/)?.[1]);
+  if (!url || !number) throw new Error("glab mr create: succeeded but could not resolve MR");
+  return { number, url };
 }
 
 async function githubRepo(pi: ExtensionAPI, cwd: string, host: GitHost): Promise<string> {
@@ -51,13 +78,16 @@ export async function listComments(pi: ExtensionAPI, cwd: string, host: GitHost,
   if (host.kind === "github") {
     const result = await cli(pi, cwd, host, ["pr", "view", String(change.number), "--json", "comments"]);
     if (result.code !== 0) fail(result, "gh pr view --comments");
-    const data = parseJson<{ comments: Array<{ id: string; body: string; author?: { login?: string } }> }>(result.stdout, "gh pr view");
-    return data.comments.map((c) => ({ id: c.id, body: c.body, author: c.author?.login }));
+    const data = parseJson<{ comments: Array<{ id: string; body?: string; author?: { login?: string } }> }>(result.stdout, "gh pr view");
+    return data.comments.map((c) => ({ id: c.id, body: c.body ?? "", author: c.author?.login }));
   }
+  // glab mr note list -F json returns discussions with nested notes[], not flat comments
   const result = await cli(pi, cwd, host, ["mr", "note", "list", String(change.number), "-F", "json"]);
   if (result.code !== 0) fail(result, "glab mr note list");
-  return parseJson<Array<{ id: number; body: string; author?: { username?: string } }>>(result.stdout, "glab mr note list")
-    .map((c) => ({ id: String(c.id), body: c.body, author: c.author?.username }));
+  type Note = { id: number; body?: string | null; author?: { username?: string } };
+  return parseJson<Array<{ notes?: Note[] | null }>>(result.stdout, "glab mr note list")
+    .flatMap((d) => d.notes ?? [])
+    .map((c) => ({ id: String(c.id), body: c.body ?? "", author: c.author?.username }));
 }
 
 export async function postReviewComment(pi: ExtensionAPI, cwd: string, host: GitHost, change: Change, body: string): Promise<string> {
@@ -104,7 +134,10 @@ export async function createIssue(pi: ExtensionAPI, cwd: string, host: GitHost, 
     if (result.code !== 0) fail(result, "gh issue create");
     return parseJson<{ url: string }>(result.stdout, "gh issue create").url;
   }
-  const result = await cli(pi, cwd, host, ["issue", "create", "-t", title, "-d", body, "-F", "json"]);
+  // glab issue create has no -F/--output
+  const result = await cli(pi, cwd, host, ["issue", "create", "-t", title, "-d", body, "--yes"]);
   if (result.code !== 0) fail(result, "glab issue create");
-  return parseJson<{ web_url: string }>(result.stdout, "glab issue create").web_url;
+  const url = firstUrl(`${result.stdout}\n${result.stderr}`);
+  if (!url) throw new Error("glab issue create: succeeded but no URL in output");
+  return url;
 }
