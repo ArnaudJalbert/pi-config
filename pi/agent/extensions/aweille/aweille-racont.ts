@@ -1,29 +1,51 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
+import { createIssue } from "./change.ts";
+import { gitHost, requireGitHost, type GitHost } from "./git-host.ts";
 
-function prompt(idea: string): string {
-  return `Turn this plain-language idea into one good GitHub user story for the current repository:
+function prompt(host: GitHost, idea: string): string {
+  return `Turn this idea into a user story for the current ${host.kind} repo (${host.cli}):
 
 ${idea}
 
-1. Verify the current directory is a GitHub repository with gh. Read only relevant repository guidance, code, tests, docs, and issues. Do not edit files.
-2. Infer the specific beneficiary, desired outcome, value, context, scope, testable acceptance criteria, and useful out-of-scope boundaries. Do not invent unsupported requirements.
-3. Apply INVEST privately. Keep the story negotiable, small enough for one sprint, and focused on one valuable end-to-end scenario rather than technical layers. If the idea is broad, draft the smallest valuable slice and state what was deferred.
-4. Present a concise title and Markdown body with: User story, Context, Scope, Acceptance criteria, and Out of scope.
-5. Do not create the issue yet. End with: "Reply with corrections or publish."
-6. Revise the draft whenever the user gives corrections.
-7. Only when the user later replies with the standalone word "publish", create the issue with gh using the approved title and body exactly. Do not add labels, assignees, projects, or milestones. Report the issue URL. If creation fails, stop without retrying.`;
+1. Read relevant guidance, code, tests, docs, and issues. Do not edit files.
+2. Infer beneficiary, outcome, value, context, scope, acceptance criteria, and out-of-scope boundaries. Do not invent requirements.
+3. Apply INVEST privately. If broad, draft the smallest valuable slice and state deferrals.
+4. Present title and Markdown body: User story, Context, Scope, Acceptance criteria, Out of scope.
+5. End with: "Reply with corrections or publish."
+6. On user corrections, revise the draft.
+7. When user replies with standalone "publish", call aweille_create_issue with the approved title and body exactly. No labels, assignees, projects, or milestones.`;
 }
 
 export default function (pi: ExtensionAPI) {
+  pi.registerTool({
+    name: "aweille_create_issue",
+    label: "Aweille Create Issue",
+    description: "Create a GitHub/GitLab issue with approved title and body.",
+    parameters: Type.Object({
+      title: Type.String(),
+      body: Type.String(),
+    }),
+    async execute(_id, { title, body }) {
+      const cwd = process.cwd();
+      const host = gitHost(cwd);
+      if ("error" in host) throw new Error(host.error);
+      const url = await createIssue(pi, cwd, host, title, body);
+      return { content: [{ type: "text", text: `Issue created: ${url}` }], details: { url } };
+    },
+  });
+
   pi.registerCommand("aweille-racont", {
-    description: "Turn a plain-language idea into a refined GitHub user story",
+    description: "Turn a plain-language idea into a refined user story issue",
     handler: (args, ctx) => {
       const idea = args.trim();
       if (!idea) {
         ctx.ui.notify("Usage: /aweille-racont <idea>", "warning");
         return;
       }
-      pi.sendUserMessage(prompt(idea));
+      const host = requireGitHost(ctx);
+      if (!host) return;
+      pi.sendUserMessage(prompt(host, idea));
     },
   });
 }
