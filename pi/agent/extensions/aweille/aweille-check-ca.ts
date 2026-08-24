@@ -1,21 +1,13 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { getCurrentChange, postReviewComment, REVIEW_MARKER } from "./change.ts";
+import { type Change, getCurrentChange, postReviewComment } from "./change.ts";
 import { gitDiff } from "./forge.ts";
-import { gitHost, requireGitHost, type GitHost } from "./git-host.ts";
+import { gitHost, gitHostOrThrow, requireGitHost, type GitHost } from "./git-host.ts";
 
 const DIFF_LIMIT = 80_000;
 
-function prompt(host: GitHost, ctx: {
-  change: { number: number; url: string };
-  diff: string;
-  truncated: boolean;
-}): string {
-  const diffBlock = ctx.truncated
-    ? `${ctx.diff}\n\n(diff truncated — inspect changed files for full context)`
-    : ctx.diff;
-
-  return `Review ${host.changeShort} #${ctx.change.number} (${ctx.change.url}). Diff is preloaded; ${host.commentsOnly}
+function prompt(host: GitHost, change: Change, diff: string, truncated: boolean): string {
+  return `Review ${host.changeShort} #${change.number} (${change.url}). Diff is preloaded; ${host.commentsOnly}
 
 1. Load ponytail-review, then code-review-and-quality. If diff includes frontend code, also load frontend-design-review and frontend-ui-engineering.
 2. Never edit code, tests, configuration, or Git history. Findings only.
@@ -25,18 +17,16 @@ function prompt(host: GitHost, ctx: {
 
 ## Diff
 \`\`\`diff
-${diffBlock || "(empty)"}
+${truncated ? `${diff}\n\n(diff truncated — inspect changed files for full context)` : diff || "(empty)"}
 \`\`\``;
 }
 
 async function startReview(pi: ExtensionAPI, cwd: string, host: GitHost): Promise<string | null> {
   const change = await getCurrentChange(pi, cwd, host);
   if (!change) return `No open ${host.changeShort} found.`;
-
-  const base = change.base ?? "main";
-  const diff = await gitDiff(pi, cwd, base);
+  const diff = await gitDiff(pi, cwd, change.base ?? "main");
   const truncated = diff.length > DIFF_LIMIT;
-  pi.sendUserMessage(prompt(host, { change, diff: truncated ? diff.slice(0, DIFF_LIMIT) : diff, truncated }));
+  pi.sendUserMessage(prompt(host, change, truncated ? diff.slice(0, DIFF_LIMIT) : diff, truncated));
   return null;
 }
 
@@ -48,17 +38,12 @@ export default function (pi: ExtensionAPI) {
     parameters: Type.Object({ body: Type.String() }),
     async execute(_id, { body }) {
       const cwd = process.cwd();
-      const host = gitHost(cwd);
-      if ("error" in host) throw new Error(host.error);
+      const host = gitHostOrThrow(cwd);
       const change = await getCurrentChange(pi, cwd, host);
       if (!change) throw new Error(`No open ${host.changeShort} found.`);
-
-      const url = await postReviewComment(pi, cwd, host, change, body);
+      await postReviewComment(pi, cwd, host, change, body);
       pi.events.emit("change:reviewed", change);
-      return {
-        content: [{ type: "text", text: `Posted review on ${host.changeShort} #${change.number}. Marker: ${REVIEW_MARKER}` }],
-        details: { change, commentUrl: url },
-      };
+      return { content: [{ type: "text", text: `Posted review on ${host.changeShort} #${change.number}.` }], details: { change } };
     },
   });
 

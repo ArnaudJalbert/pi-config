@@ -1,7 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { createIssue } from "./change.ts";
-import { gitHost, requireGitHost, type GitHost } from "./git-host.ts";
+import { gitHostOrThrow, requireGitHost, type GitHost } from "./git-host.ts";
 
 function prompt(host: GitHost, idea: string): string {
   return `Turn this idea into a user story for the current ${host.kind} repo (${host.cli}):
@@ -22,15 +22,10 @@ export default function (pi: ExtensionAPI) {
     name: "aweille_create_issue",
     label: "Aweille Create Issue",
     description: "Create a GitHub/GitLab issue with approved title and body.",
-    parameters: Type.Object({
-      title: Type.String(),
-      body: Type.String(),
-    }),
+    parameters: Type.Object({ title: Type.String(), body: Type.String() }),
     async execute(_id, { title, body }) {
       const cwd = process.cwd();
-      const host = gitHost(cwd);
-      if ("error" in host) throw new Error(host.error);
-      const url = await createIssue(pi, cwd, host, title, body);
+      const url = await createIssue(pi, cwd, gitHostOrThrow(cwd), title, body);
       return { content: [{ type: "text", text: `Issue created: ${url}` }], details: { url } };
     },
   });

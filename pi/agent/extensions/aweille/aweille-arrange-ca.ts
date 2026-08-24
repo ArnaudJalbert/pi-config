@@ -1,8 +1,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { type Change, type Comment, getCurrentChange, listComments, replyComment } from "./change.ts";
-import { readContributing } from "./forge.ts";
-import { gitHost, requireGitHost, type GitHost } from "./git-host.ts";
+import { contributingSection, readContributing } from "./forge.ts";
+import { gitHost, gitHostOrThrow, requireGitHost, type GitHost } from "./git-host.ts";
 
 function formatComments(comments: Comment[]): string {
   if (!comments.length) return "(no comments)";
@@ -22,17 +22,13 @@ ${formatComments(comments)}`;
 }
 
 function applyPrompt(host: GitHost, change: Change, comments: Comment[], contributing: string | null): string {
-  const guide = contributing?.trim()
-    ? `## CONTRIBUTING.md\n\n${contributing}`
-    : "## CONTRIBUTING.md\n\n(not found)";
-
   return `Implement the approved ${host.changeShort} review plan. Comments are preloaded; ${host.commentsOnly}
 
 1. Change only approved findings. Follow repository architecture and CONTRIBUTING.md verification rules.
 2. For each addressed finding, call aweille_reply with comment id and reply body.
 3. Do not commit, open/reopen ${host.changeShort}, or start a review.
 
-${guide}
+${contributingSection(contributing, "not found")}
 
 ## ${host.changeShort} #${change.number}
 ${change.url}
@@ -48,13 +44,9 @@ export default function (pi: ExtensionAPI) {
     name: "aweille_reply",
     label: "Aweille Reply",
     description: "Reply on a simple comment/discussion thread.",
-    parameters: Type.Object({
-      commentId: Type.String(),
-      body: Type.String(),
-    }),
+    parameters: Type.Object({ commentId: Type.String(), body: Type.String() }),
     async execute(_id, { commentId, body }) {
-      const host = gitHost(cwd());
-      if ("error" in host) throw new Error(host.error);
+      const host = gitHostOrThrow(cwd());
       const change = await getCurrentChange(pi, cwd(), host);
       if (!change) throw new Error(`No open ${host.changeShort} found.`);
       await replyComment(pi, cwd(), host, change, commentId, body);
@@ -68,8 +60,7 @@ export default function (pi: ExtensionAPI) {
       pi.sendUserMessage(`Cannot plan fixes: ${host.error}`, { deliverAs: "followUp" });
       return;
     }
-    const comments = await listComments(pi, cwd(), host, change);
-    pi.sendUserMessage(planPrompt(host, change, comments), { deliverAs: "followUp" });
+    pi.sendUserMessage(planPrompt(host, change, await listComments(pi, cwd(), host, change)), { deliverAs: "followUp" });
   });
 
   pi.registerCommand("aweille-arrange-ca", {
@@ -88,8 +79,7 @@ export default function (pi: ExtensionAPI) {
         ctx.ui.notify(`No open ${host.changeShort} found.`, "error");
         return;
       }
-      const comments = await listComments(pi, ctx.cwd, host, change);
-      pi.sendUserMessage(applyPrompt(host, change, comments, await readContributing(ctx.cwd)));
+      pi.sendUserMessage(applyPrompt(host, change, await listComments(pi, ctx.cwd, host, change), await readContributing(ctx.cwd)));
     },
   });
 }

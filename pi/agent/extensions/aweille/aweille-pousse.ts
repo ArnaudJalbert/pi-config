@@ -1,17 +1,11 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { createChange, watchCi } from "./change.ts";
-import { gatherRepoState, gitBranchOrFail, gitCommitOrFail, gitFetch, gitPushOrFail, readContributing, type RepoState } from "./forge.ts";
-import { gitHost, requireGitHost, type GitHost } from "./git-host.ts";
-
-const DEFAULT_BRANCHES = new Set(["main", "master"]);
+import { contributingSection, gatherRepoState, gitOk, readContributing, type RepoState } from "./forge.ts";
+import { gitHostOrThrow, requireGitHost, type GitHost } from "./git-host.ts";
 
 function prompt(host: GitHost, ctx: { state: RepoState; contributing: string | null }): string {
-  const contributing = ctx.contributing?.trim()
-    ? `## CONTRIBUTING.md\n\n${ctx.contributing}`
-    : "## CONTRIBUTING.md\n\n(not found — use repository defaults)";
-
-  return `Open ${host.changeShort} for this repo. Git state is already gathered; use tools for git/${host.cli} operations.
+  return `Open ${host.changeShort} for this repo. Git state is gathered; use tools for git/${host.cli} operations.
 
 ## Branch
 ${ctx.state.branch || "(detached)"}
@@ -21,10 +15,10 @@ ${ctx.state.branch || "(detached)"}
 ${ctx.state.status || "(clean)"}
 \`\`\`
 
-${contributing}
+${contributingSection(ctx.contributing, "not found — use repository defaults")}
 
 ## Your job (judgment only)
-1. If branch is ${[...DEFAULT_BRANCHES].join("/")} and there are changes, call aweille_branch with a descriptive name per CONTRIBUTING.md.
+1. If branch is main/master and there are changes, call aweille_branch with a descriptive name per CONTRIBUTING.md.
 2. Run only verification commands explicitly required by CONTRIBUTING.md. Record exact command and result.
 3. Stage intended files with git add as needed, then call aweille_commit with an imperative message per CONTRIBUTING.md.
 4. Call aweille_push, then aweille_open_change with title and body:
@@ -53,7 +47,7 @@ export default function (pi: ExtensionAPI) {
     description: "Create and checkout a new branch.",
     parameters: Type.Object({ name: Type.String() }),
     async execute(_id, { name }) {
-      await gitBranchOrFail(pi, cwd(), name);
+      await gitOk(pi, cwd(), ["checkout", "-b", name], "git checkout -b");
       return { content: [{ type: "text", text: `Branch ${name} created.` }] };
     },
   });
@@ -64,7 +58,7 @@ export default function (pi: ExtensionAPI) {
     description: "Commit staged changes.",
     parameters: Type.Object({ message: Type.String() }),
     async execute(_id, { message }) {
-      await gitCommitOrFail(pi, cwd(), message);
+      await gitOk(pi, cwd(), ["commit", "-m", message], "git commit");
       return { content: [{ type: "text", text: "Committed." }] };
     },
   });
@@ -75,7 +69,7 @@ export default function (pi: ExtensionAPI) {
     description: "Push current branch to origin.",
     parameters: Type.Object({}),
     async execute() {
-      await gitPushOrFail(pi, cwd());
+      await gitOk(pi, cwd(), ["push", "-u", "origin", "HEAD"], "git push");
       return { content: [{ type: "text", text: "Pushed to origin." }] };
     },
   });
@@ -86,14 +80,10 @@ export default function (pi: ExtensionAPI) {
     description: "Create PR/MR and announce change:opened.",
     parameters: Type.Object({ title: Type.String(), body: Type.String() }),
     async execute(_id, { title, body }) {
-      const host = gitHost(cwd());
-      if ("error" in host) throw new Error(host.error);
+      const host = gitHostOrThrow(cwd());
       const change = await createChange(pi, cwd(), host, title, body);
       pi.events.emit("change:opened", change);
-      return {
-        content: [{ type: "text", text: `Opened ${host.changeShort} #${change.number}: ${change.url}` }],
-        details: change,
-      };
+      return { content: [{ type: "text", text: `Opened ${host.changeShort} #${change.number}: ${change.url}` }], details: change };
     },
   });
 
@@ -103,9 +93,7 @@ export default function (pi: ExtensionAPI) {
     description: "Wait for CI on the current PR/MR.",
     parameters: Type.Object({}),
     async execute() {
-      const host = gitHost(cwd());
-      if ("error" in host) throw new Error(host.error);
-      const result = await watchCi(pi, cwd(), host);
+      const result = await watchCi(pi, cwd(), gitHostOrThrow(cwd()));
       return { content: [{ type: "text", text: result }] };
     },
   });
@@ -117,13 +105,12 @@ export default function (pi: ExtensionAPI) {
       if (!host) return;
       if (!await ctx.ui.confirm(`Open ${host.changeNoun}?`, `May create branch, commit, open ${host.changeShort}, and wait for CI.`)) return;
 
-      await gitFetch(pi, ctx.cwd);
+      await gitOk(pi, ctx.cwd, ["fetch", "origin"], "git fetch");
       const state = await gatherRepoState(pi, ctx.cwd);
       if (state.conflictMarkers) {
         ctx.ui.notify(`Conflict markers found:\n${state.diffCheck}`, "error");
         return;
       }
-
       pi.sendUserMessage(prompt(host, { state, contributing: await readContributing(ctx.cwd) }));
     },
   });

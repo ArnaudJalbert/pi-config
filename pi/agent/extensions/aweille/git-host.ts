@@ -33,6 +33,12 @@ export function gitHost(cwd = process.cwd()): GitHost | { error: string } {
   }
 }
 
+export function gitHostOrThrow(cwd = process.cwd()): GitHost {
+  const host = gitHost(cwd);
+  if ("error" in host) throw new Error(host.error);
+  return host;
+}
+
 export function requireGitHost(ctx: { ui: Ui }): GitHost | null {
   const host = gitHost();
   if ("error" in host) {
