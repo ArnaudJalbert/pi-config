@@ -26,7 +26,7 @@ async function startReview(pi: ExtensionAPI, cwd: string, host: GitHost): Promis
   if (!change) return `No open ${host.changeShort} found.`;
   const diff = await gitDiff(pi, cwd, change.base ?? "main");
   const truncated = diff.length > DIFF_LIMIT;
-  pi.sendUserMessage(prompt(host, change, truncated ? diff.slice(0, DIFF_LIMIT) : diff, truncated));
+  pi.sendUserMessage(prompt(host, change, truncated ? diff.slice(0, DIFF_LIMIT) : diff, truncated), { deliverAs: "followUp" });
   return null;
 }
 

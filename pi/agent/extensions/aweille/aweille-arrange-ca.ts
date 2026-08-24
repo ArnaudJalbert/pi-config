@@ -24,7 +24,7 @@ ${formatComments(comments)}`;
 async function startPlan(pi: ExtensionAPI, cwd: string, host: GitHost): Promise<string | null> {
   const change = await getCurrentChange(pi, cwd, host);
   if (!change) return `No open ${host.changeShort} found.`;
-  pi.sendUserMessage(planPrompt(host, change, await listComments(pi, cwd, host, change)));
+  pi.sendUserMessage(planPrompt(host, change, await listComments(pi, cwd, host, change)), { deliverAs: "followUp" });
   return null;
 }
 
@@ -92,7 +92,7 @@ export default function (pi: ExtensionAPI) {
         ctx.ui.notify(`No open ${host.changeShort} found.`, "error");
         return;
       }
-      pi.sendUserMessage(applyPrompt(host, change, await listComments(pi, ctx.cwd, host, change), await readContributing(ctx.cwd)));
+      pi.sendUserMessage(applyPrompt(host, change, await listComments(pi, ctx.cwd, host, change), await readContributing(ctx.cwd)), { deliverAs: "followUp" });
     },
   });
 }
