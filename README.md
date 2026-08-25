@@ -22,6 +22,10 @@ Custom extension for PR/MR workflow on GitHub (`gh`) and GitLab (`glab`). Host i
 - `/aweille-arrange-ca`: reads review comments and plans fixes (also queued after check-ca); `/aweille-arrange-ca apply` implements approved items and replies on threads.
 - `/aweille-racont <idea>`: drafts a user story with you, then publishes an approved issue on publish.
 
+### Herdr integration
+
+`herdr-agent-state.ts` reports Pi TUI state to Herdr when launched through Herdr. Herdr manages this generated extension; do not edit it manually.
+
 ### Installed extensions
 
 npm packages pinned in `pi/agent/settings.json` and installed by `bootstrap.sh`:
