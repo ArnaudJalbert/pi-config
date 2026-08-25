@@ -2,3 +2,6 @@
 .pi/
 *.session.jsonl
 .DS_Store
+
+# Plans
+.plans/
