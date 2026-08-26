@@ -11,9 +11,10 @@ function prompt(host: GitHost, change: Change, diff: string, truncated: boolean)
 
 1. Load ponytail-review, then code-review-and-quality. If diff includes frontend code, also load frontend-design-review and frontend-ui-engineering.
 2. Never edit code, tests, configuration, or Git history. Findings only.
-3. Collect every finding: source skill, severity, file:line, issue, recommended fix.
-4. Call aweille_post_review with all findings as Markdown. If none, post that no findings were found.
-5. Alert user with every finding and a count.
+3. Put each code-specific finding in an inline PR/MR comment on the exact changed line or smallest relevant range. Use the hosting CLI/API when needed. Only put a comment in the general PR/MR review when it applies to the entire change and has no specific line.
+4. In the findings summary, always link or otherwise reference each inline comment so it is easy to open. Include source skill, severity, file:line, issue, recommended fix, and inline-comment reference.
+5. Call aweille_post_review with the findings summary as Markdown. If none, post that no findings were found.
+6. Alert user with every finding and a count.
 
 ## Diff
 \`\`\`diff
