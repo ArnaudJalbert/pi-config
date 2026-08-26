@@ -3,12 +3,10 @@ import arrangeCa from "./aweille-arrange-ca.ts";
 import checkCa from "./aweille-check-ca.ts";
 import pousse from "./aweille-pousse.ts";
 import racont from "./aweille-racont.ts";
-import title from "./aweille-title.ts";
 
 export default function (pi: ExtensionAPI) {
   arrangeCa(pi);
   checkCa(pi);
   pousse(pi);
   racont(pi);
-  title(pi);
 }
