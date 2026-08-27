@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { GitHost } from "./git-host.ts";
 
 const TIMEOUT = 120_000;
 
@@ -16,11 +15,11 @@ async function exec(pi: ExtensionAPI, cwd: string, cmd: string, args: string[]):
   return { code: result.code, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
 }
 
-async function git(pi: ExtensionAPI, cwd: string, args: string[]): Promise<ExecResult> {
+export async function git(pi: ExtensionAPI, cwd: string, args: string[]): Promise<ExecResult> {
   return exec(pi, cwd, "git", args);
 }
 
-export async function cli(pi: ExtensionAPI, cwd: string, host: GitHost, args: string[]): Promise<ExecResult> {
+export async function cli(pi: ExtensionAPI, cwd: string, host: { cli: string }, args: string[]): Promise<ExecResult> {
   return exec(pi, cwd, host.cli, args);
 }
 

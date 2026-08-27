@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import arrangeCa from "./aweille-arrange-ca.ts";
 
-test("manual command starts planning current pull request", async () => {
+test("arrange-ca selector starts planning current pull request", async () => {
   let handler: ((args: string, ctx: unknown) => unknown) | undefined;
   let message = "";
 
@@ -13,8 +13,8 @@ test("manual command starts planning current pull request", async () => {
       handler = options.handler;
     },
     exec(_command: string, args: string[]) {
-      if (args.includes("comments")) return { code: 0, stdout: '{"comments":[]}' };
-      return { code: 0, stdout: '{"number":1,"url":"https://example.test/pr/1"}' };
+      if (args[0] === "api") return { code: 0, stdout: JSON.stringify({ data: { repository: { pullRequest: { comments: { nodes: [] }, reviewThreads: { nodes: [] } } } } }) };
+      return { code: 0, stdout: JSON.stringify({ number: 1, url: "https://example.test/pr/1" }) };
     },
     sendUserMessage(value: string) {
       message = value;
@@ -22,6 +22,6 @@ test("manual command starts planning current pull request", async () => {
   } as never);
 
   assert.ok(handler);
-  await handler("", { ui: { confirm: async () => true }, cwd: process.cwd() });
+  await handler("", { cwd: process.cwd(), ui: { select: async () => "Plan fixes", notify() {} } });
   assert.match(message, /Plan fixes for PR #1/);
 });

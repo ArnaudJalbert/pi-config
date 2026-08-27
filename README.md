@@ -18,8 +18,8 @@ git clone git@github.com:ArnaudJalbert/pi-config.git ~/.config/pi-config
 Custom extension for PR/MR workflow on GitHub (`gh`) and GitLab (`glab`). Host is detected from `origin`; prompts handle judgment, code runs git/CLI operations.
 
 - `/aweille-pousse`: reads `CONTRIBUTING.md`, gathers git state, then commits, opens PR/MR, queues review, and watches CI.
-- `/aweille-check-ca`: reviews the open PR/MR (also queued after pousse). Posts findings as a simple comment; never changes code.
-- `/aweille-arrange-ca`: reads review comments and plans fixes (also queued after check-ca); `/aweille-arrange-ca apply` implements approved items and replies on threads.
+- `/aweille-check-ca`: reviews open PR/MR (also queued after pousse), posts code findings inline, then queues arrange-ca. Never changes code.
+- `/aweille-arrange-ca`: selector for planning, revising, or applying review fixes. Applying replies in original threads and resolves them.
 - `/aweille-racont <idea>`: drafts a user story with you, then publishes an approved issue on publish.
 
 ### Herdr integration

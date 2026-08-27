@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { type Change, getCurrentChange, postReviewComment } from "./change.ts";
+import { type Change, getCurrentChange, postInlineComment, postReviewComment } from "./change.ts";
 import { gitDiff } from "./forge.ts";
 import { gitHost, gitHostOrThrow, requireGitHost, type GitHost } from "./git-host.ts";
 
@@ -11,8 +11,8 @@ function prompt(host: GitHost, change: Change, diff: string, truncated: boolean)
 
 1. Load ponytail-review, then code-review-and-quality. If diff includes frontend code, also load frontend-design-review and frontend-ui-engineering.
 2. Never edit code, tests, configuration, or Git history. Findings only.
-3. Put each code-specific finding in an inline PR/MR comment on the exact changed line or smallest relevant range. Use the hosting CLI/API when needed. Only put a comment in the general PR/MR review when it applies to the entire change and has no specific line.
-4. In the findings summary, always link or otherwise reference each inline comment so it is easy to open. Include source skill, severity, file:line, issue, recommended fix, and inline-comment reference.
+3. For each code-specific finding, call aweille_inline_comment on exact changed line or smallest relevant range. Only use general review summary for findings that apply to entire change and have no specific line.
+4. In findings summary, always include each aweille_inline_comment URL. Include source skill, severity, file:line, issue, recommended fix, and inline-comment URL.
 5. Call aweille_post_review with the findings summary as Markdown. If none, post that no findings were found.
 6. Alert user with every finding and a count.
 
@@ -32,17 +32,37 @@ async function startReview(pi: ExtensionAPI, cwd: string, host: GitHost): Promis
 }
 
 export default function (pi: ExtensionAPI) {
+  const cwd = () => process.cwd();
+
+  pi.registerTool({
+    name: "aweille_inline_comment",
+    label: "Aweille Inline Comment",
+    description: "Post an inline review comment on an exact changed PR/MR line and return its URL.",
+    parameters: Type.Object({
+      body: Type.String(),
+      path: Type.String(),
+      line: Type.Integer({ minimum: 1 }),
+      side: Type.Optional(Type.String()),
+    }),
+    async execute(_id, { body, path, line, side }) {
+      const host = gitHostOrThrow(cwd());
+      const change = await getCurrentChange(pi, cwd(), host);
+      if (!change) throw new Error(`No open ${host.changeShort} found.`);
+      const url = await postInlineComment(pi, cwd(), host, change, body, path, line, side === "LEFT" ? "LEFT" : "RIGHT");
+      return { content: [{ type: "text", text: `Posted inline comment: ${url}` }], details: { url } };
+    },
+  });
+
   pi.registerTool({
     name: "aweille_post_review",
     label: "Aweille Post Review",
     description: "Post or update the aweille review comment and announce change:reviewed.",
     parameters: Type.Object({ body: Type.String() }),
     async execute(_id, { body }) {
-      const cwd = process.cwd();
-      const host = gitHostOrThrow(cwd);
-      const change = await getCurrentChange(pi, cwd, host);
+      const host = gitHostOrThrow(cwd());
+      const change = await getCurrentChange(pi, cwd(), host);
       if (!change) throw new Error(`No open ${host.changeShort} found.`);
-      await postReviewComment(pi, cwd, host, change, body);
+      await postReviewComment(pi, cwd(), host, change, body);
       pi.events.emit("change:reviewed", change);
       return { content: [{ type: "text", text: `Posted review on ${host.changeShort} #${change.number}.` }], details: { change } };
     },
@@ -63,7 +83,7 @@ export default function (pi: ExtensionAPI) {
     handler: async (_args, ctx) => {
       const host = requireGitHost(ctx);
       if (!host) return;
-      if (!await ctx.ui.confirm(`Review ${host.changeNoun}?`, `Posts findings as a simple comment on current ${host.changeShort}. Never changes code.`)) return;
+      if (!await ctx.ui.confirm(`Review ${host.changeNoun}?`, `Posts findings inline and as a summary comment on current ${host.changeShort}. Never changes code.`)) return;
       const err = await startReview(pi, ctx.cwd, host);
       if (err) ctx.ui.notify(err, "error");
     },

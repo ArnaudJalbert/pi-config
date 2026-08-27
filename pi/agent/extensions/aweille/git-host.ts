@@ -39,8 +39,8 @@ export function gitHostOrThrow(cwd = process.cwd()): GitHost {
   return host;
 }
 
-export function requireGitHost(ctx: { ui: Ui }): GitHost | null {
-  const host = gitHost();
+export function requireGitHost(ctx: { cwd: string; ui: Ui }): GitHost | null {
+  const host = gitHost(ctx.cwd);
   if ("error" in host) {
     ctx.ui.notify(host.error, "error");
     return null;
