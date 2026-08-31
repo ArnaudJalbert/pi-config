@@ -10,8 +10,7 @@
     "npm:pi-web-access@0.24.0",
     "npm:@dietrichgebert/ponytail@4.9.0",
     "npm:pi-caveman@1.0.8",
-    "npm:@noice-tech/pi-github-issues@2.0.0",
     "npm:@open-cursor/pi-agent"
   ],
-  "lastChangelogVersion": "0.84.3"
+  "lastChangelogVersion": "0.84.4"
 }

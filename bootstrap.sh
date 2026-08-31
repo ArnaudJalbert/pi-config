@@ -24,4 +24,4 @@ link "$root/agents/skills" "$HOME/.agents/skills"
 pi install npm:pi-web-access@0.24.0
 pi install npm:@dietrichgebert/ponytail@4.9.0
 pi install npm:pi-caveman@1.0.8
-pi install npm:@noice-tech/pi-github-issues@2.0.0
+pi install npm:@open-cursor/pi-agent

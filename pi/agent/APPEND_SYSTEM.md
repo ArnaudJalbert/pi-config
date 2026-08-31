@@ -5,8 +5,6 @@
   codebase. If not, research online via pi-web-access. Before making a
   big change based on online research findings, confirm with me first.
 - Explain risky file edits and destructive commands before executing.
-- Write simply. Avoid AI-slop language – no flowery adjectives,
-  unnecessary adverbs, or overly formal phrasing.
 - Don't use en dashes (–) or em dashes (—).
 - Always challenge what I ask you to do and ask me questions before
   starting to implement something, we should work together.

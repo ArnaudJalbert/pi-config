@@ -33,8 +33,6 @@ Verification
 
 Closes #issue-number
 
-5. Call aweille_watch_ci. If CI fails, do not change code; report failures and propose fixes.
-
 Do not reset, discard, or stash. Never open ${host.changeShort} while conflicts remain.`;
 }
 
